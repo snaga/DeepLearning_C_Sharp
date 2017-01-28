@@ -274,6 +274,76 @@ namespace Ch3
                 Console.WriteLine("y {0}", a2s(y));
                 // must be [ 0.31682708 0.69627909]
             }
+
+            // 3.5 出力層の設計
+            {
+                double[] a = { 0.3, 2.9, 4.0 };
+                double[] b = np_exp(a);
+                Console.WriteLine("b {0}", a2s(b));
+                Console.WriteLine("b.sum {0}", np_sum(b));
+                Console.WriteLine("b/b.sum {0}", a2s(np_div(b, np_sum(b))));
+                Console.WriteLine("softmax(a) {0}", a2s(softmax(a)));
+                // must be [ 0.01821127 0.24519181 0.73659691]
+                Console.WriteLine("softmax(a).sum {0}", np_sum(softmax(a)));
+            }
+        }
+
+        static double[] softmax(double[] a)
+        {
+            double c = np_max(a);
+            double[] exp_a = np_exp(np_minus(a, c));
+            double[] y = np_div(exp_a, np_sum(exp_a));
+            return y;
+        }
+
+        static double[] np_add(double[] a, double b)
+        {
+            double[] c = new double[a.Length];
+
+            for (int i = 0; i < a.Length; i++)
+                c[i] = a[i] + b;
+            return c;
+        }
+
+        static double np_max(double[] a)
+        {
+            double max = a[0];
+            for (int i = 1; i < a.Length; i++)
+                max = Math.Max(max, a[i]);
+            return max;
+        }
+
+        static double[] np_minus(double[] a, double b)
+        {
+            double[] c = new double[a.Length];
+
+            for (int i = 0; i < a.Length; i++)
+                c[i] = a[i]  -  b;
+            return c;
+        }
+
+        static double[] np_exp(double[] a)
+        {
+            double[] b = new double[a.Length];
+            for (int i = 0; i < a.Length; i++)
+                b[i] = Math.Exp(a[i]);
+            return b;
+        }
+
+        static double np_sum(double[] a)
+        {
+            double b = 0;
+            for (int i = 0; i < a.Length; i++)
+                b += a[i];
+            return b;
+        }
+
+        static double[] np_div(double[] a, double b)
+        {
+            double[] c = new double[a.Length];
+            for (int i = 0; i < a.Length; i++)
+                c[i] = a[i] / b;
+            return c;
         }
 
         static Hashtable init_network()
