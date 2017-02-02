@@ -4,7 +4,7 @@ sys.path.append(os.pardir)  # 親ディレクトリのファイルをインポ�
 import numpy as np
 from dataset.mnist import load_mnist
 
-(x_train, t_train), (x_test, t_test) = load_mnist(flatten=True, normalize=False)
+(x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
 
 print(x_train.shape) # (60000, 784)
 print(t_train.shape) # (60000,)
