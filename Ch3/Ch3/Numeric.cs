@@ -22,13 +22,16 @@ namespace org.snaga.numeric
 
         public static double[,] add(double[,] a, double[,] b)
         {
-            Debug.Assert(a.GetLength(0) == b.GetLength(0));
+            Debug.Assert(a.GetLength(0) == b.GetLength(0) || b.GetLength(0) == 1);
             Debug.Assert(a.GetLength(1) == b.GetLength(1));
             double[,] c = new double[a.GetLength(0), a.GetLength(1)];
 
             for (int i = 0; i < a.GetLength(0); i++)
                 for (int j = 0; j < a.GetLength(1); j++)
-                    c[i, j] = a[i, j] + b[i, j];
+                    if (b.GetLength(0) == 1)
+                        c[i, j] = a[i, j] + b[0, j];
+                    else
+                        c[i, j] = a[i, j] + b[i, j];
             return c;
         }
 
@@ -90,6 +93,13 @@ namespace org.snaga.numeric
             for (int i = 0; i < aa.Length; i++)
                 aa[i] = a[idx, i];
             return aa;
+        }
+
+        public static double[,] row(double[,] x, int i, double[] r)
+        {
+            for (int j = 0; j < r.Length; j++)
+                x[i, j] = r[j];
+            return x;
         }
 
         public static double[] col(double[,] a, int idx)

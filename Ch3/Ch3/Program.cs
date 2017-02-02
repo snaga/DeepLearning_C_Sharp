@@ -47,6 +47,18 @@ namespace Ch3
             return y;
         }
 
+        static double[,] sigmoid(double[,] x)
+        {
+            double[,] ss = new double[x.GetLength(0), x.GetLength(1)];
+
+            for (int i = 0; i < x.GetLength(0); i++)
+            {
+                double[] s = sigmoid(np.row(x, i));
+                np.row(ss, i, s);
+            }
+            return ss;
+        }
+
         static double[] relu(double[] x)
         {
             double[] a = new double[x.Length];
@@ -271,6 +283,37 @@ namespace Ch3
                     Console.WriteLine("{0}: accuracy: {1}", j, (double)accuracy_cnt / (j + 1));
                 }
             }
+
+            // 3.6.3 バッチ処理
+            {
+                Console.WriteLine("3.6.3 バッチ処理: start");
+
+                double[,] x;
+                double[,] t;
+                get_data(out x, out t);
+
+                Console.WriteLine("x = " + a2s(np.row(x, 0)));
+                Console.WriteLine("t = " + a2s(np.row(t, 0)));
+
+                Hashtable network = init_network2();
+
+                int accuracy_cnt = 0;
+
+                double[,] y = predict_batch(network, x);
+
+                for (int j = 0; j < y.GetLength(0); j++)
+                {
+                    int idx = np.argmax(np.row(y, j));
+                    if (idx == t[j, 0])
+                        accuracy_cnt += 1;
+
+                    if (j % 100 == 0)
+                        Console.WriteLine("{0}: accuracy: {1}", j, (double)accuracy_cnt / (j + 1));
+                }
+                Console.WriteLine("accuracy: {0}", (double)accuracy_cnt / y.GetLength(0));
+
+                Console.WriteLine("3.6.3 バッチ処理: end");
+            }
         }
 
         static double[] predict(Hashtable network, double[,] x)
@@ -340,6 +383,64 @@ namespace Ch3
             return y;
         }
 
+        static double[,] predict_batch(Hashtable network, double[,] x)
+        {
+            double[,] y;
+
+            double[,] W1 = (double[,])network["W1"];
+            double[,] W2 = (double[,])network["W2"];
+            double[,] W3 = (double[,])network["W3"];
+            double[,] b1 = (double[,])network["b1"];
+            double[,] b2 = (double[,])network["b2"];
+            double[,] b3 = (double[,])network["b3"];
+
+            // 入力層
+            Console.WriteLine("x.shape = {0}", a2s(np.shape(x)));
+            Console.WriteLine("W1.shape = {0}", a2s(np.shape(W1)));
+            Console.WriteLine("b1.shape = {0}", a2s(np.shape(b1)));
+            Console.WriteLine("x dot W1 = {0}", a2s(np.shape(np.dot(x, W1))));
+
+            double[,] a1 = np.add(np.dot(x, W1), b1);
+
+            Console.WriteLine("a1.shape = {0}", a2s(np.shape(a1)));
+//            Console.WriteLine("a1 = {0}", a2s(a1));
+
+            double[,] z1 = sigmoid(a1);
+
+            Console.WriteLine("z1.shape = {0}", a2s(np.shape(z1)));
+//            Console.WriteLine("z1 = {0}", a2s(z1));
+
+            // 隠れ層
+            Console.WriteLine("W2.shape = {0}", a2s(np.shape(W2)));
+            Console.WriteLine("b2.shape = {0}", a2s(np.shape(b2)));
+
+            double[,] a2 = np.add(np.dot(z1, W2), b2);
+
+            Console.WriteLine("a2.shape = {0}", a2s(np.shape(a2)));
+//            Console.WriteLine("a2 = {0}", a2s(a2));
+
+            double[,] z2 = sigmoid(a2);
+
+            Console.WriteLine("z2.shape = {0}", a2s(np.shape(z2)));
+//            Console.WriteLine("z2 = {0}", a2s(z2));
+
+            // 出力層
+            Console.WriteLine("W3.shape = {0}", a2s(np.shape(W3)));
+            Console.WriteLine("b3.shape = {0}", a2s(np.shape(b3)));
+
+            double[,] a3 = np.add(np.dot(z2, W3), b3);
+
+            Console.WriteLine("a3.shape = {0}", a2s(np.shape(a3)));
+//            Console.WriteLine("a3 = {0}", a2s(a3));
+
+            y = softmax(a3);
+
+//            Console.WriteLine("y = {0}", a2s(y));
+            Console.WriteLine("y.shape = {0}", a2s(np.shape(y)));
+
+            return y;
+        }
+
         static void get_data(out double[,] x_test, out double[,] t_test)
         {
             t_test = read_data("t_test.csv", 10000, 1);
@@ -400,9 +501,21 @@ namespace Ch3
         static double[] softmax(double[] a)
         {
             double c = np.max(a);
-            double[] exp_a = np.exp(np.add(a, -1.0*c));
+            double[] exp_a = np.exp(np.add(a, -1.0 * c));
             double[] y = np.div(exp_a, np.sum(exp_a));
             return y;
+        }
+
+        static double[,] softmax(double[,] a)
+        {
+            double[,] ss = new double[a.GetLength(0), a.GetLength(1)];
+
+            for (int i = 0; i < a.GetLength(0); i++)
+            {
+                double[] s = softmax(np.row(a, i));
+                np.row(ss, i, s);
+            }
+            return ss;
         }
 
         static Hashtable init_network()

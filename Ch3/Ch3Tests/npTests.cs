@@ -133,5 +133,18 @@ namespace org.snaga.numeric.Tests
             a = new double[] { 11, 7, 3, 11 };
             Assert.AreEqual(0, np.argmax(a)); // first one wins
         }
+
+        [TestMethod()]
+        public void rowTest1()
+        {
+            double[,] a = new double[,] { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[] b = new double[] { 7, 8, 9 };
+            double[,] c = new double[,] { { 7, 8, 9 }, { 4, 5, 6 } };
+            double[,] d;
+
+            d = np.row(a, 0, b);
+
+            CollectionAssert.AreEqual(c, d);
+        }
     }
 }
