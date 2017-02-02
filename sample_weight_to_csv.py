@@ -21,6 +21,5 @@ np2csv(network['W2'], "sample_weight_W2.csv")
 np2csv(network['W3'], "sample_weight_W3.csv")
 
 np2csv(network['b1'], "sample_weight_b1.csv")
-#np2csv(network['b2'], "sample_weight_b2.csv")
-#np2csv(network['b3'], "sample_weight_b3.csv")
-
+np2csv(network['b2'], "sample_weight_b2.csv")
+np2csv(network['b3'], "sample_weight_b3.csv")
