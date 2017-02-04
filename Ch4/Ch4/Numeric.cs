@@ -20,6 +20,15 @@ namespace org.snaga.numeric
             return c;
         }
 
+        public static double[,] add(double[,] a, double b)
+        {
+            double[,] c = new double[a.GetLength(0), a.GetLength(1)];
+
+            for (int i = 0; i < a.GetLength(0); i++)
+                np.row(c, i, add(row(a, i), b));
+            return c;
+        }
+
         public static double[] add(double[] a, double[] b)
         {
             Debug.Assert(a.GetLength(0) == b.GetLength(0));
@@ -37,11 +46,10 @@ namespace org.snaga.numeric
             double[,] c = new double[a.GetLength(0), a.GetLength(1)];
 
             for (int i = 0; i < a.GetLength(0); i++)
-                for (int j = 0; j < a.GetLength(1); j++)
-                    if (b.GetLength(0) == 1)
-                        c[i, j] = a[i, j] + b[0, j];
-                    else
-                        c[i, j] = a[i, j] + b[i, j];
+                if (b.GetLength(0) == 1)
+                    np.row(c, i, add(row(a, i), row(b, 0)));
+                else
+                    np.row(c, i, add(row(a, i), row(b, i)));
             return c;
         }
 
@@ -71,11 +79,35 @@ namespace org.snaga.numeric
             return c;
         }
 
+        public static double[,] log(double[,] a)
+        {
+            double[,] c = new double[a.GetLength(0), a.GetLength(1)];
+            for (int i = 0; i < a.GetLength(0); i++)
+                np.row(c, i, log(row(a, i)));
+            return c;
+        }
+
+        public static double[] multi(double[] a, double b)
+        {
+            double[] c = new double[a.Length];
+            for (int i = 0; i < a.Length; i++)
+                c[i] = a[i] * b;
+            return c;
+        }
+
         public static double[] multi(double[] a, double[] b)
         {
             double[] c = new double[a.Length];
             for (int i = 0; i < a.Length; i++)
                 c[i] = a[i] * b[i];
+            return c;
+        }
+
+        public static double[,] multi(double[,] a, double[,] b)
+        {
+            double[,] c = new double[a.GetLength(0), a.GetLength(1)];
+            for (int i = 0; i < a.GetLength(0); i++)
+                row(c, i, multi(row(a, i), row(b, i)));
             return c;
         }
 
@@ -115,6 +147,14 @@ namespace org.snaga.numeric
             double b = 0;
             for (int i = 0; i < a.Length; i++)
                 b += a[i];
+            return b;
+        }
+
+        public static double[] sum(double[,] a)
+        {
+            double[] b = new double[a.GetLength(0)];
+            for (int i = 0; i < a.GetLength(0); i++)
+                b[i] = sum(row(a, i));
             return b;
         }
 
@@ -201,11 +241,21 @@ namespace org.snaga.numeric
             return t;
         }
 
-        public static double[,] _2D(double[] x)
+        public static double[,] reshape(double[] x, int rows, int cols)
         {
-            double[,] y = new double[1, x.Length];
-            for (int i = 0; i < y.GetLength(1); i++)
-                y[0, i] = x[i];
+            double[,] y = new double[rows, cols];
+            for (int i = 0; i < x.Length; i++)
+            {
+                for (int j = 0; j < rows; j++)
+                {
+                    for (int k = 0; k < cols; k++)
+                    {
+                        y[j, k] = x[i];
+                        i++;
+                    }
+                }
+            }
+
             return y;
         }
 

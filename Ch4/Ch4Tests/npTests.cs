@@ -110,12 +110,18 @@ namespace org.snaga.numeric.Tests
         }
 
         [TestMethod()]
-        public void _2DTest()
+        public void reshapeTest()
         {
-            double[] a = new double[] { 1, 2, 3, 4 };
-            double[,] b = new double[,] { { 1, 2, 3, 4 } };
+            double[] a = { 1, 2, 3, 4, 5, 6 };
+            double[,] b = { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[,] c = { { 1, 2, 3, 4, 5, 6 } };
+            double[,] d;
 
-            CollectionAssert.AreEqual(b, np._2D(a));
+            d = np.reshape(a, 2, 3);
+            CollectionAssert.AreEqual(b, d);
+
+            d = np.reshape(a, 1, 6);
+            CollectionAssert.AreEqual(c, d);
         }
 
         [TestMethod()]
@@ -231,6 +237,65 @@ namespace org.snaga.numeric.Tests
             double[,] d = np.rows(a, b);
 
             CollectionAssert.AreEqual(c, d);
+        }
+
+        [TestMethod()]
+        public void addTest3()
+        {
+            double[,] a = { { 1, 2, 3 }, { 4, 5, 6 } };
+            double b = 7;
+            double[,] c = { { 8, 9, 10 }, { 11, 12, 13 } };
+            double[,] d;
+
+            d = np.add(a, b);
+
+            CollectionAssert.AreEqual(c, d);
+        }
+
+        [TestMethod()]
+        public void logTest1()
+        {
+            double[,] a = new double[,] { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[,] b = new double[,] { { 0, 0.6931471805599453, 1.09861228866810969 }, { 1.3862943611198906, 1.6094379124341003, 1.791759469228055 } };
+            double[,] c;
+
+            c = np.log(a);
+
+            CollectionAssert.AreEqual(b, c);
+        }
+
+        [TestMethod()]
+        public void multiTest1()
+        {
+            double[,] a = new double[,] { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[,] b = new double[,] { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[,] c = new double[,] { { 1, 4, 9 }, { 16, 25, 36 } };
+
+            double[,] d = np.multi(a, b);
+
+            CollectionAssert.AreEqual(c, d);
+        }
+
+        [TestMethod()]
+        public void sumTest1()
+        {
+            double[,] a = new double[,] { { 1, 2, 3 }, { 4, 5, 6 } };
+            double[] b = { 6, 15 };
+
+            double[] c = np.sum(a);
+
+            CollectionAssert.AreEqual(b, c);
+        }
+
+        [TestMethod()]
+        public void multiTest2()
+        {
+            double[] a = new double[] { 1, 2, 3 };
+            double[] b = new double[] { 2, 4, 6 };
+
+            double[] c = np.multi(a, 2);
+
+            CollectionAssert.AreEqual(b, c);
         }
     }
 }

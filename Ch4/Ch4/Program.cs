@@ -19,6 +19,16 @@ namespace Ch4
             return -1.0 * np.sum(np.multi(t, np.log(np.add(y, delta))));
         }
 
+        static double[] cross_entropy_error(double[,] y, double[,] t)
+        {
+            Debug.Assert(y.GetLength(0) == t.GetLength(0));
+            Debug.Assert(y.GetLength(1) == t.GetLength(1));
+
+            int batch_size = y.GetLength(0);
+
+            return np.multi(np.div(np.sum(np.multi(t, np.log(y))), batch_size), -1);
+        }
+
         static void Main(string[] args)
         {
             // 4.2.1 2 乗和誤差
@@ -59,6 +69,9 @@ namespace Ch4
 
             double[,] t_batch = np.rows(t_train, batch_mask);
             Console.WriteLine("t_batch = {0}", np.str(t_batch));
+
+            // 4.2.4 ［バッチ対応版］交差エントロピー誤差の実装
+
         }
 
         static double[,] read_data(string file, int rows, int cols)
