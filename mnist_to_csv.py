@@ -40,4 +40,16 @@ for i in range(0,len(t_test_list)):
     f.write(str(t_test_list[i]) + "\n")
 f.close()
 
+(x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=True)
+
+f = open("t_train_onehot.csv", 'w')
+for i in range(0,len(t_train_list)):
+    f.write(str(t_train_list[i]) + "\n")
+f.close()
+
+f = open("t_test_onehot.csv", 'w')
+for i in range(0,len(t_test_list)):
+    f.write(str(t_test_list[i]) + "\n")
+f.close()
+
 sys.exit(0)
