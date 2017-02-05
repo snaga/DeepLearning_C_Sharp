@@ -65,6 +65,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="nnTests.cs" />
     <Compile Include="npTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

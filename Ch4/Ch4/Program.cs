@@ -10,36 +10,10 @@ namespace Ch4
     {
         public double[,] W;
 
-        static double[] softmax(double[] a)
-        {
-            double c = np.max(a);
-            double[] exp_a = np.exp(np.add(a, -1.0 * c));
-            double[] y = np.div(exp_a, np.sum(exp_a));
-            return y;
-        }
-
-        // softmaxのバッチ対応版
-        static double[,] softmax(double[,] a)
-        {
-            double[,] y = np.zeros_like(a);
-            for (int i = 0; i < a.GetLength(0); i++)
-                np.row(y, i, softmax(np.row(a, i)));
-            return y;
-        }
-
-        static double[] cross_entropy_error(double[,] y, double[,] t)
-        {
-            Debug.Assert(y.GetLength(0) == t.GetLength(0));
-            Debug.Assert(y.GetLength(1) == t.GetLength(1));
-
-            int batch_size = y.GetLength(0);
-
-            return np.multi(np.div(np.sum(np.multi(t, np.log(y))), batch_size), -1);
-        }
-
         public simpleNet()
         {
             W = np.random_randn(2, 3);
+            W = new double[,] { { 0.47355232, 0.9977393, 0.84668094 }, { 0.85557411, 0.03563661, 0.69422093 } };
         }
 
         public double[,] predict(double[,] x)
@@ -48,60 +22,51 @@ namespace Ch4
             return np.dot(x, W);
         }
 
-        public double[] loss(double[,] x, double[,] t)
+        public double loss(double[,] x, double[,] t)
         {
             double[,] z = predict(x);
-            double[,] y = softmax(z);
-            double[] loss = cross_entropy_error(y, t);
+            double[,] y = nn.softmax(z);
+            double loss = nn.cross_entropy_error(y, t);
             return loss;
+        }
+
+        static void _Main(string[] args)
+        {
+            simpleNet net = new simpleNet();
+            Console.WriteLine(" W = " + np.str(net.W));
+
+            double[] x = new double[] { 0.6, 0.9 };
+            Console.WriteLine(" x = " + np.str(x));
+
+            double[,] p = net.predict(np.reshape(x, 1, 2));
+            Console.WriteLine(" p = " + np.str(p));
         }
     }
 
     class Program
     {
-        static double mean_squared_error(double[] y, double[] t)
-        {
-            return 0.5 * np.sum(np.pow(np.subtract(y, t), 2));
-        }
-
-        static double cross_entropy_error(double[] y, double[] t)
-        {
-            double delta = 1e-7;
-            return -1.0 * np.sum(np.multi(t, np.log(np.add(y, delta))));
-        }
-
-        static double[] cross_entropy_error(double[,] y, double[,] t)
-        {
-            Debug.Assert(y.GetLength(0) == t.GetLength(0));
-            Debug.Assert(y.GetLength(1) == t.GetLength(1));
-
-            int batch_size = y.GetLength(0);
-
-            return np.multi(np.div(np.sum(np.multi(t, np.log(y))), batch_size), -1);
-        }
-
         static void Main(string[] args)
         {
             // 4.2.1 2 乗和誤差
             double[] t = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 };
             double[] y = { 0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0 };
 
-            Console.WriteLine("MSE = {0}", mean_squared_error(y, t));
-            Debug.Assert(Math.Round(mean_squared_error(y, t), 4) == 0.0975);
+            Console.WriteLine("MSE = {0}", nn.mean_squared_error(y, t));
+            Debug.Assert(Math.Round(nn.mean_squared_error(y, t), 4) == 0.0975);
 
             y = new double[] { 0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.6, 0.0, 0.0 };
-            Console.WriteLine("MSE = {0}", mean_squared_error(y, t));
-            Debug.Assert(Math.Round(mean_squared_error(y, t), 4) == 0.5975);
+            Console.WriteLine("MSE = {0}", nn.mean_squared_error(y, t));
+            Debug.Assert(Math.Round(nn.mean_squared_error(y, t), 4) == 0.5975);
 
             // 4.2.2 交差エントロピー誤差
             t = new double[] { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 };
             y = new double[] { 0.1, 0.05, 0.6, 0.0, 0.05, 0.1, 0.0, 0.1, 0.0, 0.0 };
-            Console.WriteLine("MSE = {0}", cross_entropy_error(y, t));
-            Debug.Assert(Math.Round(cross_entropy_error(y, t), 10) == Math.Round(0.510825457099338, 10));
+            Console.WriteLine("MSE = {0}", nn.cross_entropy_error(y, t));
+            Debug.Assert(Math.Round(nn.cross_entropy_error(y, t), 10) == Math.Round(0.510825457099338, 10));
 
             y = new double[] { 0.1, 0.05, 0.1, 0.0, 0.05, 0.1, 0.0, 0.6, 0.0, 0.0 };
-            Console.WriteLine("MSE = {0}", cross_entropy_error(y, t));
-            Debug.Assert(Math.Round(cross_entropy_error(y, t), 10) == Math.Round(2.30258409299455, 10));
+            Console.WriteLine("MSE = {0}", nn.cross_entropy_error(y, t));
+            Debug.Assert(Math.Round(nn.cross_entropy_error(y, t), 10) == Math.Round(2.30258409299455, 10));
 
             // 4.2.3 ミニバッチ学習
             double[,] x_train = read_data("x_train.csv", 60000, 784);
@@ -181,9 +146,9 @@ namespace Ch4
             Debug.Assert(np.argmax(np.row(p, 0)) == 2);
 
             double[,] tt = new double[,] { { 0, 0, 1 } };
-            Console.WriteLine("loss = " + np.str(net.loss(x, tt)));
+            Console.WriteLine("loss = " + net.loss(x, tt));
             // for debug
-            Debug.Assert(np.str(net.loss(x, tt)) == "[ 0.928068538748235 ]");
+            Debug.Assert(net.loss(x, tt) == 0.928068538748235);
 
             // delegate関数から参照するために、クラス変数に保存する。
             Program.xx = x;
@@ -206,7 +171,7 @@ namespace Ch4
         {
             Debug.Assert(xx.GetLength(0) == 1 && tt.GetLength(0) == 1);
 
-            return net.loss(xx, tt)[0];
+            return net.loss(xx, tt);
         }
 
         public static double[] gradient_descent(numerical_diff_func f, double[] init_x, double lr=0.01, int step_num=100)
