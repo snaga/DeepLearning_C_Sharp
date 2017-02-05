@@ -2,10 +2,21 @@
 using System.Linq;
 using System.Diagnostics;
 
+using Troschuetz.Random;
+
 namespace org.snaga.numeric
 {
     public class np
     {
+        public static double[,] zeros_like(double[,] a)
+        {
+            double[,] b = new double[a.GetLength(0), a.GetLength(1)];
+            for (int i = 0; i < a.GetLength(0); i++)
+                for (int j = 0; j < a.GetLength(1); j++)
+                    b[i, j] = 0;
+            return b;
+        }
+
         public static int[] shape(double[,] a)
         {
             return new int[] { a.GetLength(0), a.GetLength(1) };
@@ -266,6 +277,14 @@ namespace org.snaga.numeric
             for (int i = 0; i < b; i++)
                 aa[i] = rand.Next(a);
             return aa;
+        }
+
+        public static double[,] random_randn(int a, int b)
+        {
+            double[] x;
+            var trand = new TRandom();
+            x = trand.NormalSamples(0.0, 1.0).Take(a * b).ToArray<double>();
+            return reshape(x, a, b);
         }
 
         public static String str(double[] x)

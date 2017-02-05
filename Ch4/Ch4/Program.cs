@@ -6,6 +6,57 @@ using org.snaga.numeric;
 
 namespace Ch4
 {
+    class simpleNet
+    {
+        public double[,] W;
+
+        static double[] softmax(double[] a)
+        {
+            double c = np.max(a);
+            double[] exp_a = np.exp(np.add(a, -1.0 * c));
+            double[] y = np.div(exp_a, np.sum(exp_a));
+            return y;
+        }
+
+        // softmaxのバッチ対応版
+        static double[,] softmax(double[,] a)
+        {
+            double[,] y = np.zeros_like(a);
+            for (int i = 0; i < a.GetLength(0); i++)
+                np.row(y, i, softmax(np.row(a, i)));
+            return y;
+        }
+
+        static double[] cross_entropy_error(double[,] y, double[,] t)
+        {
+            Debug.Assert(y.GetLength(0) == t.GetLength(0));
+            Debug.Assert(y.GetLength(1) == t.GetLength(1));
+
+            int batch_size = y.GetLength(0);
+
+            return np.multi(np.div(np.sum(np.multi(t, np.log(y))), batch_size), -1);
+        }
+
+        public simpleNet()
+        {
+            W = np.random_randn(2, 3);
+        }
+
+        public double[,] predict(double[,] x)
+        {
+            Debug.Assert(x.GetLength(1) == W.GetLength(0));
+            return np.dot(x, W);
+        }
+
+        public double[] loss(double[,] x, double[,] t)
+        {
+            double[,] z = predict(x);
+            double[,] y = softmax(z);
+            double[] loss = cross_entropy_error(y, t);
+            return loss;
+        }
+    }
+
     class Program
     {
         static double mean_squared_error(double[] y, double[] t)
@@ -74,7 +125,7 @@ namespace Ch4
 
             // 4.3.2 数値微分の例
             Console.WriteLine(numerical_diff(function_1, 5));
-            Debug.Assert(Math.Round(numerical_diff(function_1, 5),14) == 0.19999999999909);
+            Debug.Assert(Math.Round(numerical_diff(function_1, 5), 14) == 0.19999999999909);
 
             Console.WriteLine(numerical_diff(function_1, 10));
             Debug.Assert(Math.Round(numerical_diff(function_1, 10), 15) == 0.299999999998635);
@@ -108,6 +159,54 @@ namespace Ch4
             // 学習率が小さすぎる例：lr=1e-10
             Console.WriteLine(np.str(gradient_descent(function_2, init_x, 1e-10, 100)));
             Debug.Assert(np.str(gradient_descent(function_2, init_x, 1e-10, 100)) == "[ -2.99999994, 3.99999991999999 ]");
+
+            // 4.4.2 ニューラルネットワークに対する勾配
+            simpleNet net = new simpleNet();
+            // for debug
+            net.W = new double[,] {
+                { 0.47355232, 0.9977393, 0.84668094},
+                { 0.85557411, 0.03563661, 0.69422093 }
+            };
+            Console.WriteLine("W = " + np.str(net.W));
+
+            double[,] x = new double[,] { { 0.6, 0.9 } };
+            Console.WriteLine("x = " + np.str(x));
+
+            double[,] p = net.predict(x);
+            Console.WriteLine("p = " + np.str(p));
+            // for debug
+            Debug.Assert(np.str(p) == "[ [ 1.054148091, 0.630716529, 1.132807401 ] ]");
+
+            Console.WriteLine("argmax = " + np.argmax(np.row(p, 0)));
+            Debug.Assert(np.argmax(np.row(p, 0)) == 2);
+
+            double[,] tt = new double[,] { { 0, 0, 1 } };
+            Console.WriteLine("loss = " + np.str(net.loss(x, tt)));
+            // for debug
+            Debug.Assert(np.str(net.loss(x, tt)) == "[ 0.928068538748235 ]");
+
+            // delegate関数から参照するために、クラス変数に保存する。
+            Program.xx = x;
+            Program.tt = tt;
+            Program.net = net;
+            double[,] dW = np.zeros_like(net.W);
+
+            double[,] w_bak = net.W;
+            dW = numerical_gradient(f, net.W);
+            Console.WriteLine("grad = {0}", np.str(dW));
+
+            Debug.Assert(np.str(net.W) == np.str(w_bak));
+        }
+
+        public static double[,] xx;
+        public static double[,] tt;
+        public static simpleNet net;
+
+        public static double f(double[] W)
+        {
+            Debug.Assert(xx.GetLength(0) == 1 && tt.GetLength(0) == 1);
+
+            return net.loss(xx, tt)[0];
         }
 
         public static double[] gradient_descent(numerical_diff_func f, double[] init_x, double lr=0.01, int step_num=100)
@@ -121,6 +220,8 @@ namespace Ch4
             return x;
         }
 
+        // 複数の x を受け取り、それぞれの x に対応する勾配 grad を返却する。
+        // ここでは偏微分をするので、xの各要素を個別に取り出して勾配を計算する
         public static double[] numerical_gradient(numerical_diff_func f, double[] x)
         {
             double h = 1e-4;
@@ -131,23 +232,64 @@ namespace Ch4
                 double tmp_val = x[i];
 
                 x[i] = tmp_val + h;
-                double fxh1 = f(x);
+                double fxh1 = f(x); // xに対応するyの値(1)
                 x[i] = tmp_val - h;
-                double fxh2 = f(x);
+                double fxh2 = f(x); // xに対応するyの値(2)
 
-                grad[i] = (fxh1 - fxh2) / (2*h);
+                grad[i] = (fxh1 - fxh2) / (2*h); // xの前後におけるyの勾配
                 x[i] = tmp_val;
             }
             return grad;
         }
 
+        // ------------------------------------------------------
+        // p.111 で使う numerical_gradient() 関数の実装。
+        //
+        // Pythonは参照渡しのため、引数として渡されたxを書き換えると
+        // simpleNet クラスの W が書き換えられて損失が計算される。
+        //
+        // C# は値渡しのため、引数として渡した x を書き換えても simpleNet の W の値は
+        // 書き変わらない。そのため、重みのパラメータを偏微分する処理が動作しない。
+        // ここでは simpleNet の W を直接書き換えて、偏微分処理後に元に戻す。
+        // ------------------------------------------------------
+        public static double[,] numerical_gradient(numerical_diff_func f, double[,] x)
+        {
+            double h = 1e-4;
+            double[,] grad = np.zeros_like(x);
+            double[,] x_bak = x;
+
+            for (int i = 0; i < x.GetLength(0); i++)
+            {
+                for (int j = 0; j < x.GetLength(1); j++)
+                {
+                    double tmp_val = x[i, j];
+
+                    x[i, j] = tmp_val + h;
+                    net.W = x;
+                    double fxh1 = f(np.row(x, i)); // xに対応するyの値を計算する(1)
+
+                    x[i, j] = tmp_val - h;
+                    net.W = x;
+                    double fxh2 = f(np.row(x, i)); // xに対応するyの値を計算する(2)
+
+                    grad[i,j] = (fxh1 - fxh2) / (2 * h); // xの前後におけるyの勾配を計算する
+
+                    net.W = x_bak; // 重みの値を元に戻す。
+                }
+            }
+            return grad;
+        }
+
+        // 1つ以上の説明変数(x)を受け取って、ひとつの被説明変数(y)を返す関数のdelegate
         public delegate double numerical_diff_func(double[] x);
 
+        // 説明変数が1つの場合
         public static double numerical_diff(numerical_diff_func f, double x)
         {
             return numerical_diff(f, new double[] { x });
         }
 
+        // 説明変数が複数の場合
         public static double numerical_diff(numerical_diff_func f, double[] x)
         {
             double h = 1e-4;
