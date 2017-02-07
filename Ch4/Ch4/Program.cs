@@ -43,6 +43,197 @@ namespace Ch4
         }
     }
 
+    class TwoLayerNet
+    {
+        public double[,] W1;
+        public double[,] b1;
+        public double[,] W2;
+        public double[,] b2;
+
+        public TwoLayerNet(int input_size, int hidden_size, int output_size, double weight_init_std = 0.01)
+        {
+            W1 = np.multi(np.random_randn(input_size, hidden_size), weight_init_std);
+            b1 = np.reshape(np.zeros(hidden_size), 1, hidden_size);
+            W2 = np.multi(np.random_randn(hidden_size, output_size), weight_init_std);
+            b2 = np.reshape(np.zeros(output_size), 1, output_size);
+
+            Console.WriteLine("W1.shape = " + np.str(np.shape(W1)));
+            Console.WriteLine("b1.shape = " + np.str(np.shape(b1)));
+            Console.WriteLine("W1.shape = " + np.str(np.shape(W2)));
+            Console.WriteLine("b2.shape = " + np.str(np.shape(b2)));
+        }
+
+        public double[] predict(double[] x)
+        {
+            double[,] a1;
+            double[,] z1;
+            double[,] a2;
+            double[,] y;
+            double[,] xx;
+
+            xx = np.reshape(x, 1, x.Length);
+
+            a1 = np.add(np.dot(xx, W1), b1);
+            //                Console.WriteLine("  a1.shape = " + np.str(np.shape(a1)));
+            z1 = nn.sigmoid(a1);
+            //                Console.WriteLine("  z1.shape = " + np.str(np.shape(z1)));
+            a2 = np.add(np.dot(z1, W2), b2);
+            //                Console.WriteLine("  a2.shape = " + np.str(np.shape(a2)));
+            y = nn.softmax(a2);
+            //                Console.WriteLine("  y.shape = " + np.str(np.shape(y)));
+
+            //                Console.WriteLine("y.shape = " + np.str(np.shape(y)));
+            Debug.Assert(y.GetLength(0) == 1);
+            return np.row(y, 0);
+        }
+
+        // バッチ対応
+        public double[,] predict(double[,] x)
+        {
+            double[,] a1;
+            double[,] z1;
+            double[,] a2;
+            double[,] y;
+
+            a1 = np.add(np.dot(x, W1), b1);
+            z1 = nn.sigmoid(a1);
+            a2 = np.add(np.dot(z1, W2), b2);
+            y = nn.softmax(a2);
+            return y;
+        }
+
+        public double loss(double[] x, double[] t)
+        {
+            double[] y = predict(x);
+            //                Console.WriteLine("loss: t.shape = " + np.str(np.shape(t)));
+            //                Console.WriteLine("loss: y.shape = " + np.str(np.shape(y)));
+            return nn.cross_entropy_error(y, t);
+        }
+
+        // バッチ対応
+        public double loss(double[,] x, double[,] t)
+        {
+            double[,] y = predict(x);
+            return nn.cross_entropy_error(y, t);
+        }
+
+        public double accuracy(double[] x, double[] t)
+        {
+            double[] y = predict(x);
+            int yy = np.argmax(y);
+            int tt = np.argmax(t);
+            int count = 0;
+
+            Debug.Assert(y.Length == t.Length);
+
+            for (int i = 0; i < y.Length; i++)
+                if (y[i] == t[i])
+                    count++;
+            return (double)count / (double)y.Length;
+        }
+
+        public double[,] numerical_gradient(double[] x, double[] t, ref double[,] p)
+        {
+            double h = 1e-4;
+            double[,] bak;
+            double[,] grad;
+
+            bak = p;
+            grad = np.zeros_like(p);
+            for (int i = 0; i < p.GetLength(0); i++)
+            {
+                for (int j = 0; j < p.GetLength(1); j++)
+                {
+                    p[i, j] = bak[i, j] + h;
+                    double fxh1 = loss(x, t);
+                    p[i, j] = bak[i, j] - h;
+                    double fxh2 = loss(x, t);
+                    grad[i, j] = (fxh1 - fxh2) / (2 * h);
+                    p = bak;
+                }
+                Console.WriteLine("numerical_gradient: {0}/{1}", i, p.GetLength(0));
+            }
+            Console.WriteLine("numerical_gradient: grad.shape = {0}", np.str(np.shape(grad)));
+            return grad;
+        }
+
+        public double[,] numerical_gradient(double[,] x, double[,] t, ref double[,] p)
+        {
+            double h = 1e-4;
+            double bak;
+            double[,] grad;
+
+            grad = np.zeros_like(p);
+            for (int i = 0; i < p.GetLength(0); i++)
+            {
+                for (int j = 0; j < p.GetLength(1); j++)
+                {
+                    bak = p[i, j];
+                    p[i, j] = bak + h;
+                    double fxh1 = loss(x, t);
+                    p[i, j] = bak - h;
+                    double fxh2 = loss(x, t);
+                    grad[i, j] = (fxh1 - fxh2) / (2 * h);
+                    Console.WriteLine("grad[{0},{1}] = {2}", i, j, grad[i, j]);
+                    p[i, j] = bak;
+                }
+                Console.WriteLine("numerical_gradient: {0}/{1}", i, p.GetLength(0));
+                return grad;
+            }
+            Console.WriteLine("numerical_gradient: grad.shape = {0}", np.str(np.shape(grad)));
+            return grad;
+        }
+        static void Main(string[] args)
+        {
+            double[,] W = np.random_randn(784, 100);
+            double[,] x = np.random_randn(100, 784);
+
+            Console.WriteLine(DateTime.Now.ToString("F"));
+            for (int i = 0; i < 1000; i++)
+            {
+                np.dot(W, x);
+                //                Console.WriteLine("{0}", i);
+            }
+            Console.WriteLine(DateTime.Now.ToString("F"));
+        }
+
+        static void _Main(string[] args)
+        {
+            TwoLayerNet network = new TwoLayerNet(784, 100, 10);
+
+            double[,] x = np.random_rand(100, 784); // 100 inputs
+            Console.WriteLine(" x.shape = " + np.str(np.shape(x)));
+
+            double[] y = network.predict(np.row(x, 0)); // 1 output
+            Console.WriteLine(" y.shape = " + np.str(np.shape(y)));
+
+            double[,] y2 = network.predict(x); // 100 outputs
+            Console.WriteLine(" y2.shape = " + np.str(np.shape(y2)));
+
+            double[,] t = np.random_rand(100, 10); // 100 outputs
+
+#if NOT_USED
+            Console.WriteLine(DateTime.Now.ToString("F"));
+            for (int j = 0; j < 100; j++)
+                for (int i = 0; i < t.GetLength(0); i++)
+                    network.loss(np.row(x, i), np.row(t, i));
+
+            Console.WriteLine(DateTime.Now.ToString("F"));
+            for (int j = 0; j < 100; j++)
+                network.loss(x, t);
+
+            Console.WriteLine(DateTime.Now.ToString("F"));
+            Environment.Exit(0);
+#endif
+
+            double[,] grad = network.numerical_gradient(x, t, ref network.W1);
+            /*
+                        Console.WriteLine(" grad.shape = " + np.str(np.shape(grad)));
+                        Console.WriteLine(" grad = " + np.str(grad));
+            */
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
